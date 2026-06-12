@@ -58,7 +58,7 @@ export function buildAnalysisCardData(upload, analysis) {
     fileSize: formatFileSize(upload.file_size_bytes),
     timestamp: formatTimestamp(upload.uploaded_at),
     hash: `SHA-256: ${upload.sha256_hash}`,
-    thumbnail: null,
+    thumbnail: upload.thumbnail_url || null,
     layers: [
       { name: "NPR Signal", score: toPercent(nprScore) },
       { name: "Metadata Anomaly", score: toPercent(metadataScore) },
