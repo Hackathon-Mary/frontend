@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Download, Clock, MoreHorizontal, RefreshCw } from "lucide-react";
+import { Download, Clock, MoreHorizontal, RefreshCw, AlertTriangle } from "lucide-react";
 import { apiFetch } from "../services/api";
 import { analyzeUpload } from "../services/analyze";
 import { generateReport } from "../services/report";
-import { buildAnalysisCardData, VERDICT_LABELS } from "../services/formatters";
+import { buildAnalysisCardData } from "../services/formatters";
 
 function getScoreColor(score) {
   if (score >= 70) return "#D32F2F";
@@ -62,12 +62,22 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[13px] text-[#5F5E5A] truncate mb-0.5">{data.filename}</p>
-              {hasAnalysis ? (
+
+              {!hasAnalysis && (
+                <p className="text-[14px] text-[#888780] mt-1">Belum dianalisis</p>
+              )}
+
+              {hasAnalysis && data.isDegraded && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <AlertTriangle size={16} className="text-[#E65100]" />
+                  <p className="text-[14px] font-semibold text-[#E65100]">Sinyal Tidak Memadai</p>
+                </div>
+              )}
+
+              {hasAnalysis && !data.isDegraded && (
                 <p className="text-[28px] font-bold leading-none" style={{ color: getScoreColor(data.aiScore) }}>
                   {data.aiScore}% <span className="text-[22px]">AI</span>
                 </p>
-              ) : (
-                <p className="text-[14px] text-[#888780] mt-1">Belum dianalisis</p>
               )}
             </div>
             {/* Menu */}
@@ -89,7 +99,16 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
                       {busy ? "Menganalisis..." : "Jalankan analisis"}
                     </button>
                   )}
-                  {hasAnalysis && (
+                  {hasAnalysis && data.isDegraded && (
+                    <button
+                      onClick={() => { setMenuOpen(false); handleAnalyze(); }}
+                      disabled={busy}
+                      className="w-full text-left px-3 py-2 text-[13px] text-[#085041] hover:bg-[#F1EFE8] disabled:opacity-50"
+                    >
+                      {busy ? "Menganalisis..." : "Analisis ulang"}
+                    </button>
+                  )}
+                  {hasAnalysis && !data.isDegraded && (
                     <button
                       onClick={handleReport}
                       disabled={busy}
@@ -103,7 +122,7 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
             </div>
           </div>
 
-          {hasAnalysis && (
+          {hasAnalysis && !data.isDegraded && (
             <p className="text-[11px] text-[#5F5E5A] mt-1">{data.verdictLabel}</p>
           )}
 
@@ -124,7 +143,14 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
         <p className="text-[11px] text-[#888780] font-mono truncate">{data.hash}</p>
       </div>
 
-      {/* Layer bars — hanya tampil kalau sudah dianalisis */}
+      {/* Penjelasan saat degraded */}
+      {hasAnalysis && data.isDegraded && data.explanation && (
+        <div className="mt-2.5 bg-[#FAEEDA] border border-[#F5D89E] rounded-lg px-3 py-2">
+          <p className="text-[12px] text-[#854F0B] leading-relaxed">{data.explanation}</p>
+        </div>
+      )}
+
+      {/* Layer bars — tampil selama sudah dianalisis (termasuk saat degraded) */}
       {hasAnalysis && (
         <div className="mt-3 flex flex-col gap-2">
           {data.layers.map((layer) => (
@@ -166,16 +192,10 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadUploads();
-  }, []);
-
-  async function loadUploads() {
+  const loadUploads = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Endpoint daftar upload milik user — sesuaikan path kalau backend
-      // menyediakan GET /api/v1/upload/ untuk list
       const data = await apiFetch("/api/v1/upload/");
       const list = Array.isArray(data) ? data : data?.items || [];
 
@@ -188,23 +208,18 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  useEffect(() => {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  loadUploads();
+}, []);
 
   async function handleAnalyze(uploadId) {
     try {
-      const result = await analyzeUpload(uploadId);
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === uploadId
-            ? buildAnalysisCardData(
-                { ...item, upload_id: item.id, sha256_hash: item.hash.replace("SHA-256: ", ""), original_filename: item.filename, file_size_bytes: null, uploaded_at: null },
-                result
-              )
-            : item
-        )
-      );
-      // Reload supaya data fresh dari backend (lebih aman)
-      loadUploads();
+      await analyzeUpload(uploadId);
+      // Reload supaya data fresh dari backend
+      await loadUploads();
     } catch (err) {
       setError(err.message || "Analisis gagal.");
     }
