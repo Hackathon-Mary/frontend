@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { Upload, Link, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { uploadImage, uploadImageFromUrl } from "../services/upload";
 
@@ -12,7 +11,6 @@ export default function UploadPage() {
   const [status, setStatus] = useState("idle"); // idle | uploading | success | error
   const [errorMsg, setErrorMsg] = useState("");
   const fileRef = useRef();
-  const navigate = useNavigate();
 
   const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = () => setIsDragging(false);
@@ -42,7 +40,6 @@ export default function UploadPage() {
     try {
       await uploadImage(file);
       setStatus("success");
-      // Arahkan ke Analytics setelah berhasil — sesuaikan kalau pakai state navigation
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("mary:navigate", { detail: "Analytics" }));
       }, 800);
