@@ -10,9 +10,10 @@ export const VERDICT_LABELS = {
   inconclusive: "Tidak Dapat Ditentukan",
   likely_authentic: "Kemungkinan Asli",
   authentic: "Asli",
+  degraded_signal: "Sinyal Tidak Memadai",
 };
 
-/** Ubah score 0.0–1.0 jadi persen integer */
+/** Ubah score 0.0–1.0 jadi persen integer. null -> 0 */
 export function toPercent(score) {
   if (score === null || score === undefined) return 0;
   return Math.round(score * 100);
@@ -48,6 +49,19 @@ export function buildAnalysisCardData(upload, analysis) {
   const layers = analysis?.layers || {};
   const nprScore = layers.npr_signal?.score ?? 0;
   const metadataScore = layers.metadata_anomaly?.score ?? 0;
+  const vllm = layers.vllm_analysis;
+
+  const layerList = [
+    { name: "NPR Signal", score: toPercent(nprScore) },
+    { name: "Metadata Anomaly", score: toPercent(metadataScore) },
+  ];
+
+  // Tambahkan layer VLLM hanya jika backend mengembalikannya
+  if (vllm) {
+    layerList.push({ name: "VLLM Analysis", score: toPercent(vllm.score) });
+  }
+
+  const isDegraded = analysis?.verdict === "degraded_signal";
 
   return {
     id: upload.upload_id,
@@ -55,14 +69,13 @@ export function buildAnalysisCardData(upload, analysis) {
     aiScore: toPercent(analysis?.total_confidence_score),
     verdict: analysis?.verdict,
     verdictLabel: VERDICT_LABELS[analysis?.verdict] || "Belum dianalisis",
+    isDegraded,
     fileSize: formatFileSize(upload.file_size_bytes),
     timestamp: formatTimestamp(upload.uploaded_at),
     hash: `SHA-256: ${upload.sha256_hash}`,
     thumbnail: upload.thumbnail_url || null,
-    layers: [
-      { name: "NPR Signal", score: toPercent(nprScore) },
-      { name: "Metadata Anomaly", score: toPercent(metadataScore) },
-    ],
+    layers: layerList,
+    explanation: analysis?.explanation || "",
     analysisId: analysis?.analysis_id,
     reportToken: null,
   };
