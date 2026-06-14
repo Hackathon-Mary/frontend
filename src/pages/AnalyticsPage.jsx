@@ -4,6 +4,7 @@ import { apiFetch } from "../services/api";
 import { analyzeUpload } from "../services/analyze";
 import { generateReport } from "../services/report";
 import { buildAnalysisCardData } from "../services/formatters";
+import ReportSubmissionPage from "./ReportSubmissionPage";
 
 function getScoreColor(score) {
   if (score >= 70) return "#D32F2F";
@@ -17,7 +18,7 @@ function getBarColor(score) {
   return "#66BB6A";
 }
 
-function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
+function AnalysisCard({ data, onAnalyze, onGenerateReport, onPrepareSubmission }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -32,13 +33,26 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
     }
   };
 
-  const handleReport = async () => {
+  const handleDownload = async () => {
     setBusy(true);
     setMenuOpen(false);
     try {
       const report = await onGenerateReport(data.id);
       if (report?.download_url) {
         window.open(report.download_url, "_blank");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePrepareSubmission = async () => {
+    setBusy(true);
+    setMenuOpen(false);
+    try {
+      const report = await onGenerateReport(data.id);
+      if (report) {
+        onPrepareSubmission(report, data);
       }
     } finally {
       setBusy(false);
@@ -89,7 +103,7 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
                 <MoreHorizontal size={16} />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-7 bg-white border border-[#E8E6DF] rounded-xl shadow-md z-10 w-[160px] py-1">
+                <div className="absolute right-0 top-7 bg-white border border-[#E8E6DF] rounded-xl shadow-md z-10 w-[180px] py-1">
                   {!hasAnalysis && (
                     <button
                       onClick={() => { setMenuOpen(false); handleAnalyze(); }}
@@ -109,13 +123,22 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport }) {
                     </button>
                   )}
                   {hasAnalysis && !data.isDegraded && (
-                    <button
-                      onClick={handleReport}
-                      disabled={busy}
-                      className="w-full text-left px-3 py-2 text-[13px] text-[#2C2C2A] hover:bg-[#F1EFE8] disabled:opacity-50"
-                    >
-                      {busy ? "Membuat..." : "Download PDF Report"}
-                    </button>
+                    <>
+                      <button
+                        onClick={handleDownload}
+                        disabled={busy}
+                        className="w-full text-left px-3 py-2 text-[13px] text-[#2C2C2A] hover:bg-[#F1EFE8] disabled:opacity-50"
+                      >
+                        {busy ? "Membuat..." : "Download PDF Report"}
+                      </button>
+                      <button
+                        onClick={handlePrepareSubmission}
+                        disabled={busy}
+                        className="w-full text-left px-3 py-2 text-[13px] text-[#085041] hover:bg-[#F1EFE8] disabled:opacity-50"
+                      >
+                        {busy ? "Memuat..." : "Siapkan Laporan Resmi"}
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -191,6 +214,7 @@ export default function AnalyticsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [submissionView, setSubmissionView] = useState(null); // { report, cardData } | null
 
   const loadUploads = async () => {
     setLoading(true);
@@ -211,14 +235,13 @@ export default function AnalyticsPage() {
   };
 
   useEffect(() => {
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  loadUploads();
-}, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadUploads();
+  }, []);
 
   async function handleAnalyze(uploadId) {
     try {
       await analyzeUpload(uploadId);
-      // Reload supaya data fresh dari backend
       await loadUploads();
     } catch (err) {
       setError(err.message || "Analisis gagal.");
@@ -232,6 +255,16 @@ export default function AnalyticsPage() {
       setError(err.message || "Gagal membuat report.");
       return null;
     }
+  }
+
+  if (submissionView) {
+    return (
+      <ReportSubmissionPage
+        report={submissionView.report}
+        cardData={submissionView.cardData}
+        onBack={() => setSubmissionView(null)}
+      />
+    );
   }
 
   return (
@@ -262,6 +295,7 @@ export default function AnalyticsPage() {
             data={item}
             onAnalyze={handleAnalyze}
             onGenerateReport={handleGenerateReport}
+            onPrepareSubmission={(report, cardData) => setSubmissionView({ report, cardData })}
           />
         ))}
       </div>
