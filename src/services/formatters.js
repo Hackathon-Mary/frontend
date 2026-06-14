@@ -80,3 +80,37 @@ export function buildAnalysisCardData(upload, analysis) {
     reportToken: null,
   };
 }
+
+/**
+ * Bangun draft kronologi siap-paste untuk form Patroli Siber / Dumas Presisi,
+ * berdasarkan hasil analisis Mary.
+ */
+export function buildIncidentNarrative(cardData) {
+  const { filename, timestamp, hash, verdictLabel, explanation, aiScore, isDegraded } = cardData;
+
+  const scoreLine = isDegraded
+    ? "Sistem tidak dapat memberikan skor pasti karena kualitas gambar terdegradasi (kompresi tinggi)."
+    : `Tingkat keyakinan sistem terhadap konten buatan AI: ${aiScore}% (${verdictLabel}).`;
+
+  return [
+    `Pada ${timestamp}, saya menerima/menemukan konten visual berupa file "${filename}" yang diduga merupakan hasil rekayasa kecerdasan buatan (AI-generated image) dan digunakan untuk mengancam/mencemarkan nama baik saya.`,
+    "",
+    `Konten tersebut telah diverifikasi menggunakan sistem Mary (deteksi deepfake berbasis AI Vision). ${scoreLine}`,
+    explanation ? `Penjelasan teknis sistem: ${explanation}` : "",
+    "",
+    `Bukti hash integritas file (${hash}) dan laporan forensik lengkap terlampir sebagai bukti pendukung.`,
+  ].filter(Boolean).join("\n");
+}
+
+/** Saran kategori kasus untuk dropdown "Jenis Kasus" di Patroli Siber */
+export function suggestCaseCategory(verdict) {
+  const mapping = {
+    ai_generated: "Pemalsuan Identitas / Konten Asusila (Deepfake)",
+    likely_ai: "Pemalsuan Identitas / Konten Asusila (Diduga Deepfake)",
+    inconclusive: "Pemerasan / Ancaman Online",
+    likely_authentic: "Pemerasan / Ancaman Online",
+    authentic: "Pemerasan / Ancaman Online",
+    degraded_signal: "Pemerasan / Ancaman Online (Verifikasi Lanjutan Diperlukan)",
+  };
+  return mapping[verdict] || "Kejahatan Siber Lainnya";
+}
