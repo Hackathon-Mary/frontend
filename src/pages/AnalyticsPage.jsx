@@ -285,6 +285,7 @@ export default function AnalyticsPage() {
     <div className="absolute inset-0 overflow-y-auto px-4 py-5">
       <div className="max-w-[500px] mx-auto">
 
+        {/* Header — di luar area yang berubah, posisinya selalu fix */}
         <div className="mb-4">
           <h2 className="text-[14px] font-semibold text-[#2C2C2A]">Hasil Analisis</h2>
           <p className="text-[12px] text-[#888780] mt-0.5">
@@ -292,34 +293,37 @@ export default function AnalyticsPage() {
           </p>
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 border-2 border-[#B6E0CD] border-t-[#085041] rounded-full animate-spin" />
-          </div>
-        )}
+        {/* Area konten — min-height mencegah reflow drastis saat transisi loading -> hasil */}
+        <div className="min-h-[200px]">
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-6 h-6 border-2 border-[#B6E0CD] border-t-[#085041] rounded-full animate-spin" />
+            </div>
+          )}
 
-        {!loading && error && (
-          <div className="bg-[#FCEBEB] border border-[#F09595] text-[#791F1F] text-[13px] rounded-xl px-4 py-3 mb-3">
-            {error}
-          </div>
-        )}
+          {!loading && error && (
+            <div className="bg-[#FCEBEB] border border-[#F09595] text-[#791F1F] text-[13px] rounded-xl px-4 py-3 mb-3">
+              {error}
+            </div>
+          )}
 
-        {!loading && !error && items.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-[13px] text-[#888780]">Belum ada upload. Mulai dari halaman New Chat.</p>
-          </div>
-        )}
+          {!loading && !error && items.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-[13px] text-[#888780]">Belum ada upload. Mulai dari halaman New Chat.</p>
+            </div>
+          )}
 
-        {!loading && items.map((item) => (
-          <AnalysisCard
-            key={item.id}
-            data={item}
-            onAnalyze={handleAnalyze}
-            onGenerateReport={handleGenerateReport}
-            onPrepareSubmission={(report, cardData) => setSubmissionView({ report, cardData })}
-            onPreview={(src, alt) => setPreviewImage({ src, alt })}
-          />
-        ))}
+          {!loading && items.map((item) => (
+            <AnalysisCard
+              key={item.id}
+              data={item}
+              onAnalyze={handleAnalyze}
+              onGenerateReport={handleGenerateReport}
+              onPrepareSubmission={(report, cardData) => setSubmissionView({ report, cardData })}
+              onPreview={(src, alt) => setPreviewImage({ src, alt })}
+            />
+          ))}
+        </div>
       </div>
 
       <ImagePreviewModal
