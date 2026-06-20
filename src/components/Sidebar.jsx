@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, TrendingUp, Scale, History, Folder, CircleHelp, LogOut } from "lucide-react";
+import { Plus, TrendingUp, Scale, History, Folder, CircleHelp, LogOut, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const IconMary = () => (
@@ -27,9 +27,53 @@ function getInitials(name) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+function LogoutModal({ onConfirm, onCancel }) {
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-2xl p-6 w-full max-w-[340px] shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-10 h-10 rounded-full bg-[#F7C1C1] flex items-center justify-center flex-shrink-0">
+            <LogOut size={18} className="text-[#A32D2D]" />
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-[#888780] hover:text-[#2C2C2A] transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-[15px] font-semibold text-[#2C2C2A] mb-1">Keluar dari akun?</p>
+        <p className="text-[13px] text-[#5F5E5A] leading-relaxed mb-5">
+          Kamu perlu login kembali dengan Google untuk mengakses Mary.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 bg-[#F1EFE8] text-[#2C2C2A] text-[13px] font-medium py-2.5 rounded-xl hover:bg-[#E8E6DF] transition-colors"
+          >
+            Batal
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 bg-[#A32D2D] text-white text-[13px] font-medium py-2.5 rounded-xl hover:bg-[#8C2424] transition-colors"
+          >
+            Ya, Keluar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Sidebar({ active, setActive, expanded, setExpanded }) {
   const { user, logout } = useAuth();
-  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [navLocked, setNavLocked] = useState(false);
 
   useEffect(() => {
@@ -39,15 +83,6 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
     window.addEventListener("mary:lock-nav", handleLock);
     return () => window.removeEventListener("mary:lock-nav", handleLock);
   }, []);
-
-  function handleLogoutClick() {
-    if (confirmLogout) {
-      logout();
-    } else {
-      setConfirmLogout(true);
-      setTimeout(() => setConfirmLogout(false), 3000);
-    }
-  }
 
   return (
     <>
@@ -63,7 +98,7 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
           max-sm:fixed max-sm:top-0 max-sm:left-0 max-sm:h-full max-sm:z-40 max-sm:shadow-xl"
         style={{ width: expanded ? "185px" : "52px" }}
       >
-        {/* Logo — SELALU w-full, ikon dalam slot 28px tetap */}
+        {/* Logo */}
         <div
           className="w-full flex items-center gap-2.5 px-3 mb-6 cursor-pointer"
           onClick={() => setExpanded(!expanded)}
@@ -76,7 +111,7 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
           )}
         </div>
 
-        {/* New Chat — button SELALU w-full */}
+        {/* New Chat */}
         <div className="px-2 mb-1">
           <button
             onClick={() => setActive("new")}
@@ -96,7 +131,7 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
           </div>
         )}
 
-        {/* Nav items — button SELALU w-full */}
+        {/* Nav items */}
         <nav className="flex flex-col gap-0.5 px-2">
           {navItems.map((item) => (
             <button
@@ -114,28 +149,21 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
 
         <div className="flex-1" />
 
-        {/* Logout — button SELALU w-full */}
+        {/* Logout — buka modal, bukan klik 2x */}
         <div className="px-2 mb-1">
           <button
-            onClick={handleLogoutClick}
+            onClick={() => setShowLogoutModal(true)}
             title={!expanded ? "Logout" : ""}
-            className={`w-full h-9 flex items-center rounded-lg text-sm transition-colors overflow-hidden
-              ${confirmLogout
-                ? "bg-[#F7C1C1] text-[#A32D2D]"
-                : "text-[#5F5E5A] hover:bg-[#F7C1C1]/40 hover:text-[#A32D2D]"}`}
+            className="w-full h-9 flex items-center rounded-lg text-sm text-[#5F5E5A] hover:bg-[#F7C1C1]/40 hover:text-[#A32D2D] transition-colors overflow-hidden"
           >
             <div className="w-[36px] flex-shrink-0 flex items-center justify-center"><LogOut size={16} /></div>
-            {expanded && (
-              <span className="whitespace-nowrap">
-                {confirmLogout ? "Klik lagi untuk keluar" : "Logout"}
-              </span>
-            )}
+            {expanded && <span className="whitespace-nowrap">Logout</span>}
           </button>
         </div>
 
-        {/* User profile — container SELALU w-full, sama pola persis seperti button di atas */}
+        {/* User profile — gap diperbaiki, tidak nempel */}
         <div className="px-2">
-          <div className="w-full h-9 flex items-center rounded-lg overflow-hidden">
+          <div className="w-full h-10 flex items-center rounded-lg overflow-hidden">
             <div className="w-[36px] flex-shrink-0 flex items-center justify-center">
               <div className="w-8 h-8 rounded-full bg-[#B6E0CD] flex items-center justify-center text-[#085041] text-xs font-semibold overflow-hidden">
                 {user?.picture
@@ -144,14 +172,21 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
               </div>
             </div>
             {expanded && (
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium text-[#2C2C2A] truncate">{user?.name || "Pengguna"}</div>
-                <div className="text-[11px] text-[#888780] truncate">{user?.email || ""}</div>
+              <div className="min-w-0 ml-2 pr-1">
+                <div className="text-[13px] font-medium text-[#2C2C2A] truncate leading-tight">{user?.name || "Pengguna"}</div>
+                <div className="text-[11px] text-[#888780] truncate leading-tight mt-0.5">{user?.email || ""}</div>
               </div>
             )}
           </div>
         </div>
       </aside>
+
+      {showLogoutModal && (
+        <LogoutModal
+          onConfirm={logout}
+          onCancel={() => setShowLogoutModal(false)}
+        />
+      )}
     </>
   );
 }
