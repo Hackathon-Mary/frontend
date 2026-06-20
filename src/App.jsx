@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/Sidebar";
+import MobileNav from "./components/MobileNav";
 import LoginPage from "./pages/LoginPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import UploadPage from "./pages/UploadPage";
@@ -16,11 +17,10 @@ function MainLayout() {
   const [active, setActive] = useState("new");
   const [expanded, setExpanded] = useState(false);
 
-  // Dengarkan navigasi dari halaman lain (mis. UploadPage -> Analytics setelah upload sukses)
   useEffect(() => {
     function handleNavigate(e) {
       setActive(e.detail);
-      setExpanded(false); // auto-collapse sidebar setelah navigasi (penting untuk mobile)
+      setExpanded(false);
     }
     window.addEventListener("mary:navigate", handleNavigate);
     return () => window.removeEventListener("mary:navigate", handleNavigate);
@@ -39,9 +39,15 @@ function MainLayout() {
   };
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif" }} className="flex h-screen w-full bg-[#EDEAE2] overflow-hidden">
+    <div style={{ fontFamily: "'Inter', sans-serif" }} className="flex flex-col sm:flex-row h-screen w-full bg-[#EDEAE2] overflow-hidden">
+      {/* Topbar mobile (di atas) */}
+      <MobileNav active={active} setActive={setActive} />
+
+      {/* Sidebar desktop (kiri) */}
       <Sidebar active={active} setActive={setActive} expanded={expanded} setExpanded={setExpanded} />
-      <main className="relative flex-1 bg-[#EDEAE2] overflow-hidden min-w-0">
+
+      {/* Konten — beri padding bawah di mobile supaya tidak ketutup bottom nav */}
+      <main className="relative flex-1 bg-[#EDEAE2] overflow-hidden min-w-0 pb-16 sm:pb-0">
         {renderPage()}
       </main>
     </div>
