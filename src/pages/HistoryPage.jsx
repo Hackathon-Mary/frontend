@@ -3,6 +3,7 @@ import { Clock, ChevronRight, ArrowLeft } from "lucide-react";
 import { apiFetch } from "../services/api";
 import { getCustodyLog, EVENT_TYPE_LABELS } from "../services/custody";
 import { formatTimestamp, formatFileSize } from "../services/formatters";
+import ImagePreviewModal from "../components/ImagePreviewModal";
 
 export default function HistoryPage() {
   const [items, setItems] = useState([]);
@@ -11,6 +12,7 @@ export default function HistoryPage() {
   const [selected, setSelected] = useState(null);
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null); // { src, alt } | null
 
   const loadUploads = async () => {
     setLoading(true);
@@ -27,8 +29,8 @@ export default function HistoryPage() {
   };
 
   useEffect(() => {
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  loadUploads();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadUploads();
   }, []);
 
   async function openCustody(upload) {
@@ -57,11 +59,22 @@ export default function HistoryPage() {
             Kembali ke riwayat
           </button>
 
-          <div className="bg-[#F6F6F6] rounded-2xl p-4 border border-[#E8E6DF] mb-4">
-            <p className="text-[14px] font-medium text-[#2C2C2A] truncate">{selected.original_filename}</p>
-            <p className="text-[12px] text-[#888780] mt-0.5">
-              {formatFileSize(selected.file_size_bytes)} · {formatTimestamp(selected.uploaded_at)}
-            </p>
+          <div className="bg-[#F6F6F6] rounded-2xl p-4 border border-[#E8E6DF] mb-4 flex gap-3">
+            <div
+              className="w-[56px] h-[56px] rounded-xl bg-[#E8E6DF] flex-shrink-0 overflow-hidden cursor-pointer"
+              onClick={() => selected.thumbnail_url && setPreviewImage({ src: selected.thumbnail_url, alt: selected.original_filename })}
+            >
+              {selected.thumbnail_url
+                ? <img src={selected.thumbnail_url} alt={selected.original_filename} className="w-full h-full object-cover" />
+                : <div className="w-full h-full bg-[#D3D1C7]" />
+              }
+            </div>
+            <div className="min-w-0">
+              <p className="text-[14px] font-medium text-[#2C2C2A] truncate">{selected.original_filename}</p>
+              <p className="text-[12px] text-[#888780] mt-0.5">
+                {formatFileSize(selected.file_size_bytes)} · {formatTimestamp(selected.uploaded_at)}
+              </p>
+            </div>
           </div>
 
           <p className="text-[12px] font-medium text-[#5F5E5A] uppercase tracking-wide mb-3">
@@ -100,6 +113,12 @@ export default function HistoryPage() {
             </div>
           )}
         </div>
+
+        <ImagePreviewModal
+          src={previewImage?.src}
+          alt={previewImage?.alt}
+          onClose={() => setPreviewImage(null)}
+        />
       </div>
     );
   }
@@ -107,6 +126,13 @@ export default function HistoryPage() {
   return (
     <div className="absolute inset-0 overflow-y-auto px-4 py-5">
       <div className="max-w-[500px] mx-auto">
+
+        <div className="mb-4">
+          <h2 className="text-[14px] font-semibold text-[#2C2C2A]">Riwayat Upload</h2>
+          <p className="text-[12px] text-[#888780] mt-0.5">
+            Semua foto yang pernah kamu upload beserta jejak audit (chain of custody) untuk keperluan forensik.
+          </p>
+        </div>
 
         {loading && (
           <div className="flex items-center justify-center py-20">

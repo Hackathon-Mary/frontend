@@ -10,7 +10,7 @@ const VERDICT_BADGE = {
   inconclusive: { label: "Tidak Dapat Ditentukan", bg: "#F1EFE8", text: "#5F5E5A" },
   likely_authentic: { label: "Kemungkinan Asli", bg: "#E1F5EE", text: "#085041" },
   authentic: { label: "Asli", bg: "#E1F5EE", text: "#085041" },
-  degraded_signal: { label: "Sinyal Tidak Memadai", bg: "#FAEEDA", text: "#854F0B" },
+  degraded_signal: { label: "Kualitas Gambar Kurang Jelas", bg: "#FAEEDA", text: "#854F0B" },
 };
 
 function ReportCard({ item, onPrepareSubmission }) {
@@ -148,6 +148,12 @@ export default function FolderPage() {
     loadReports();
   }, []);
 
+  // Beritahu sidebar bahwa kita sedang di sub-halaman "Siapkan Laporan"
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mary:lock-nav", { detail: !!submissionView }));
+    return () => window.dispatchEvent(new CustomEvent("mary:lock-nav", { detail: false }));
+  }, [submissionView]);
+
   if (submissionView) {
     return (
       <ReportSubmissionPage
@@ -161,6 +167,13 @@ export default function FolderPage() {
   return (
     <div className="absolute inset-0 overflow-y-auto px-4 py-5">
       <div className="max-w-[500px] mx-auto">
+
+        <div className="mb-4">
+          <h2 className="text-[14px] font-semibold text-[#2C2C2A]">Laporan Saya</h2>
+          <p className="text-[12px] text-[#888780] mt-0.5">
+            Dokumen PDF forensik yang sudah dibuat — siap diunduh, dibagikan, atau dilampirkan ke laporan resmi.
+          </p>
+        </div>
 
         {loading && (
           <div className="flex items-center justify-center py-20">
