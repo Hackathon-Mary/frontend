@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Plus, TrendingUp, Scale, History, Folder, CircleHelp, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -28,85 +29,135 @@ function getInitials(name) {
 
 export default function Sidebar({ active, setActive, expanded, setExpanded }) {
   const { user, logout } = useAuth();
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [navLocked, setNavLocked] = useState(false);
+
+  useEffect(() => {
+    function handleLock(e) {
+      setNavLocked(e.detail);
+    }
+    window.addEventListener("mary:lock-nav", handleLock);
+    return () => window.removeEventListener("mary:lock-nav", handleLock);
+  }, []);
+
+  function handleLogoutClick() {
+    if (confirmLogout) {
+      logout();
+    } else {
+      setConfirmLogout(true);
+      setTimeout(() => setConfirmLogout(false), 3000);
+    }
+  }
 
   return (
-    <aside
-      className="flex-shrink-0 flex flex-col bg-[#F6F6F6] py-5 border-r border-[#D3D1C7]/60 transition-[width] duration-200 ease-in-out overflow-hidden"
-      style={{ width: expanded ? "185px" : "52px" }}
-    >
-      {/* Logo */}
-      <div
-        className="flex items-center gap-2.5 px-3 mb-6 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
+    <>
+      {/* Backdrop saat sidebar expanded di mobile */}
+      {expanded && (
+        <div
+          className="hidden max-sm:block fixed inset-0 bg-black/30 z-30"
+          onClick={() => setExpanded(false)}
+        />
+      )}
+
+      <aside
+        className="flex-shrink-0 flex flex-col bg-[#F6F6F6] py-5 border-r border-[#D3D1C7]/60 transition-[width] duration-200 ease-in-out overflow-hidden
+          max-sm:fixed max-sm:top-0 max-sm:left-0 max-sm:h-full max-sm:z-40 max-sm:shadow-xl"
+        style={{ width: expanded ? "185px" : "52px" }}
       >
-        <div className="flex-shrink-0"><IconMary /></div>
-        {expanded && (
-          <span className="text-[#085041] font-bold text-base tracking-widest whitespace-nowrap">
-            MARY
-          </span>
-        )}
-      </div>
-
-      {/* New Chat */}
-      <div className="px-2 mb-1">
-        <button
-          onClick={() => setActive("new")}
-          style={{ width: expanded ? "100%" : "36px", height: "36px" }}
-          className={`flex items-center rounded-lg text-sm font-medium transition-colors overflow-hidden
-            ${active === "new" ? "bg-[#B6E0CD] text-[#085041]" : "text-[#5F5E5A] hover:bg-[#B6E0CD]/40"}`}
+        {/* Logo */}
+        <div
+          className="flex items-center gap-2.5 px-3 mb-6 cursor-pointer"
+          onClick={() => setExpanded(!expanded)}
         >
-          <div className="w-[36px] flex-shrink-0 flex justify-center"><Plus size={16} /></div>
-          {expanded && <span className="whitespace-nowrap">New Chat</span>}
-        </button>
-      </div>
-
-      {/* Nav items */}
-      <nav className="flex flex-col gap-0.5 px-2">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            onClick={() => setActive(item.label)}
-            title={!expanded ? item.label : ""}
-            style={{ width: expanded ? "100%" : "36px", height: "36px" }}
-            className={`flex items-center rounded-lg text-sm transition-colors overflow-hidden
-              ${active === item.label ? "bg-[#B6E0CD]/60 text-[#085041] font-medium" : "text-[#5F5E5A] hover:bg-[#D3D1C7]/40"}`}
-          >
-            <div className="w-[36px] flex-shrink-0 flex justify-center">{item.icon}</div>
-            {expanded && <span className="whitespace-nowrap">{item.label}</span>}
-          </button>
-        ))}
-      </nav>
-
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Logout */}
-      <div className="px-2 mb-1">
-        <button
-          onClick={logout}
-          title={!expanded ? "Logout" : ""}
-          style={{ width: expanded ? "100%" : "36px", height: "36px" }}
-          className="flex items-center rounded-lg text-sm text-[#5F5E5A] hover:bg-[#F7C1C1]/40 hover:text-[#A32D2D] transition-colors overflow-hidden"
-        >
-          <div className="w-[36px] flex-shrink-0 flex justify-center"><LogOut size={16} /></div>
-          {expanded && <span className="whitespace-nowrap">Logout</span>}
-        </button>
-      </div>
-
-      {/* User profile */}
-      <div className={`flex items-center gap-2.5 px-2 py-2 ${!expanded && "justify-center"}`}>
-        <div className="w-8 h-8 rounded-full bg-[#B6E0CD] flex items-center justify-center text-[#085041] text-xs font-semibold flex-shrink-0 overflow-hidden">
-          {user?.picture
-            ? <img src={user.picture} alt={user.name} className="w-full h-full object-cover" />
-            : getInitials(user?.name)}
+          <div className="w-[28px] flex-shrink-0 flex justify-center"><IconMary /></div>
+          {expanded && (
+            <span className="text-[#085041] font-bold text-base tracking-widest whitespace-nowrap">
+              MARY
+            </span>
+          )}
         </div>
-        {expanded && (
-          <div className="min-w-0">
-            <div className="text-[13px] font-medium text-[#2C2C2A] truncate">{user?.name || "Pengguna"}</div>
-            <div className="text-[11px] text-[#888780] truncate">{user?.email || ""}</div>
+
+        {/* New Chat */}
+        <div className="px-2 mb-1">
+          <button
+            onClick={() => setActive("new")}
+            style={{ width: expanded ? "100%" : "36px", height: "36px" }}
+            className={`flex items-center rounded-lg text-sm font-medium transition-colors overflow-hidden
+              ${active === "new" ? "bg-[#B6E0CD] text-[#085041]" : "text-[#5F5E5A] hover:bg-[#B6E0CD]/40"}`}
+          >
+            <div className="w-[36px] flex-shrink-0 flex justify-center"><Plus size={16} /></div>
+            {expanded && <span className="whitespace-nowrap">New Chat</span>}
+          </button>
+        </div>
+
+        {/* Peringatan saat sedang di sub-halaman (mis. Siapkan Laporan) */}
+        {navLocked && expanded && (
+          <div className="px-2 pb-1">
+            <p className="text-[10px] text-[#854F0B] px-1 leading-relaxed">
+              ⚠ Sedang menyiapkan laporan — pindah menu akan membatalkan progres ini.
+            </p>
           </div>
         )}
-      </div>
-    </aside>
+
+        {/* Nav items */}
+        <nav className="flex flex-col gap-0.5 px-2">
+          {navItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => setActive(item.label)}
+              title={!expanded ? item.label : ""}
+              style={{ width: expanded ? "100%" : "36px", height: "36px" }}
+              className={`flex items-center rounded-lg text-sm transition-colors overflow-hidden
+                ${active === item.label ? "bg-[#B6E0CD]/60 text-[#085041] font-medium" : "text-[#5F5E5A] hover:bg-[#D3D1C7]/40"}`}
+            >
+              <div className="w-[36px] flex-shrink-0 flex justify-center">{item.icon}</div>
+              {expanded && <span className="whitespace-nowrap">{item.label}</span>}
+            </button>
+          ))}
+        </nav>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Logout */}
+        <div className="px-2 mb-1">
+          <button
+            onClick={handleLogoutClick}
+            title={!expanded ? "Logout" : ""}
+            style={{ width: expanded ? "100%" : "36px", height: "36px" }}
+            className={`flex items-center rounded-lg text-sm transition-colors overflow-hidden
+              ${confirmLogout
+                ? "bg-[#F7C1C1] text-[#A32D2D]"
+                : "text-[#5F5E5A] hover:bg-[#F7C1C1]/40 hover:text-[#A32D2D]"}`}
+          >
+            <div className="w-[36px] flex-shrink-0 flex justify-center"><LogOut size={16} /></div>
+            {expanded && (
+              <span className="whitespace-nowrap">
+                {confirmLogout ? "Klik lagi untuk keluar" : "Logout"}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* User profile */}
+        <div className="px-2">
+          <div className="flex items-center rounded-lg" style={{ width: expanded ? "100%" : "36px" }}>
+            <div className="w-[36px] flex-shrink-0 flex justify-center">
+              <div className="w-8 h-8 rounded-full bg-[#B6E0CD] flex items-center justify-center text-[#085041] text-xs font-semibold overflow-hidden">
+                {user?.picture
+                  ? <img src={user.picture} alt={user.name} className="w-full h-full object-cover" />
+                  : getInitials(user?.name)}
+              </div>
+            </div>
+            {expanded && (
+              <div className="min-w-0 ml-1">
+                <div className="text-[13px] font-medium text-[#2C2C2A] truncate">{user?.name || "Pengguna"}</div>
+                <div className="text-[11px] text-[#888780] truncate">{user?.email || ""}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
