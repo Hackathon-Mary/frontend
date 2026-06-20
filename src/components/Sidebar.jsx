@@ -51,7 +51,6 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
 
   return (
     <>
-      {/* Backdrop saat sidebar expanded di mobile */}
       {expanded && (
         <div
           className="hidden max-sm:block fixed inset-0 bg-black/30 z-30"
@@ -64,12 +63,12 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
           max-sm:fixed max-sm:top-0 max-sm:left-0 max-sm:h-full max-sm:z-40 max-sm:shadow-xl"
         style={{ width: expanded ? "185px" : "52px" }}
       >
-        {/* Logo */}
+        {/* Logo — SELALU w-full, ikon dalam slot 28px tetap */}
         <div
-          className="flex items-center gap-2.5 px-3 mb-6 cursor-pointer"
+          className="w-full flex items-center gap-2.5 px-3 mb-6 cursor-pointer"
           onClick={() => setExpanded(!expanded)}
         >
-          <div className="w-[28px] flex-shrink-0 flex justify-center"><IconMary /></div>
+          <div className="w-[28px] flex-shrink-0 flex items-center justify-center"><IconMary /></div>
           {expanded && (
             <span className="text-[#085041] font-bold text-base tracking-widest whitespace-nowrap">
               MARY
@@ -77,20 +76,18 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
           )}
         </div>
 
-        {/* New Chat */}
+        {/* New Chat — button SELALU w-full */}
         <div className="px-2 mb-1">
           <button
             onClick={() => setActive("new")}
-            style={{ width: expanded ? "100%" : "36px", height: "36px" }}
-            className={`flex items-center rounded-lg text-sm font-medium transition-colors overflow-hidden
+            className={`w-full h-9 flex items-center rounded-lg text-sm font-medium transition-colors overflow-hidden
               ${active === "new" ? "bg-[#B6E0CD] text-[#085041]" : "text-[#5F5E5A] hover:bg-[#B6E0CD]/40"}`}
           >
-            <div className="w-[36px] flex-shrink-0 flex justify-center"><Plus size={16} /></div>
+            <div className="w-[36px] flex-shrink-0 flex items-center justify-center"><Plus size={16} /></div>
             {expanded && <span className="whitespace-nowrap">New Chat</span>}
           </button>
         </div>
 
-        {/* Peringatan saat sedang di sub-halaman (mis. Siapkan Laporan) */}
         {navLocked && expanded && (
           <div className="px-2 pb-1">
             <p className="text-[10px] text-[#854F0B] px-1 leading-relaxed">
@@ -99,38 +96,35 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
           </div>
         )}
 
-        {/* Nav items */}
+        {/* Nav items — button SELALU w-full */}
         <nav className="flex flex-col gap-0.5 px-2">
           {navItems.map((item) => (
             <button
               key={item.label}
               onClick={() => setActive(item.label)}
               title={!expanded ? item.label : ""}
-              style={{ width: expanded ? "100%" : "36px", height: "36px" }}
-              className={`flex items-center rounded-lg text-sm transition-colors overflow-hidden
+              className={`w-full h-9 flex items-center rounded-lg text-sm transition-colors overflow-hidden
                 ${active === item.label ? "bg-[#B6E0CD]/60 text-[#085041] font-medium" : "text-[#5F5E5A] hover:bg-[#D3D1C7]/40"}`}
             >
-              <div className="w-[36px] flex-shrink-0 flex justify-center">{item.icon}</div>
+              <div className="w-[36px] flex-shrink-0 flex items-center justify-center">{item.icon}</div>
               {expanded && <span className="whitespace-nowrap">{item.label}</span>}
             </button>
           ))}
         </nav>
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Logout */}
+        {/* Logout — button SELALU w-full */}
         <div className="px-2 mb-1">
           <button
             onClick={handleLogoutClick}
             title={!expanded ? "Logout" : ""}
-            style={{ width: expanded ? "100%" : "36px", height: "36px" }}
-            className={`flex items-center rounded-lg text-sm transition-colors overflow-hidden
+            className={`w-full h-9 flex items-center rounded-lg text-sm transition-colors overflow-hidden
               ${confirmLogout
                 ? "bg-[#F7C1C1] text-[#A32D2D]"
                 : "text-[#5F5E5A] hover:bg-[#F7C1C1]/40 hover:text-[#A32D2D]"}`}
           >
-            <div className="w-[36px] flex-shrink-0 flex justify-center"><LogOut size={16} /></div>
+            <div className="w-[36px] flex-shrink-0 flex items-center justify-center"><LogOut size={16} /></div>
             {expanded && (
               <span className="whitespace-nowrap">
                 {confirmLogout ? "Klik lagi untuk keluar" : "Logout"}
@@ -139,10 +133,10 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
           </button>
         </div>
 
-        {/* User profile */}
+        {/* User profile — container SELALU w-full, sama pola persis seperti button di atas */}
         <div className="px-2">
-          <div className="flex items-center rounded-lg" style={{ width: expanded ? "100%" : "36px" }}>
-            <div className="w-[36px] flex-shrink-0 flex justify-center">
+          <div className="w-full h-9 flex items-center rounded-lg overflow-hidden">
+            <div className="w-[36px] flex-shrink-0 flex items-center justify-center">
               <div className="w-8 h-8 rounded-full bg-[#B6E0CD] flex items-center justify-center text-[#085041] text-xs font-semibold overflow-hidden">
                 {user?.picture
                   ? <img src={user.picture} alt={user.name} className="w-full h-full object-cover" />
@@ -150,7 +144,7 @@ export default function Sidebar({ active, setActive, expanded, setExpanded }) {
               </div>
             </div>
             {expanded && (
-              <div className="min-w-0 ml-1">
+              <div className="min-w-0">
                 <div className="text-[13px] font-medium text-[#2C2C2A] truncate">{user?.name || "Pengguna"}</div>
                 <div className="text-[11px] text-[#888780] truncate">{user?.email || ""}</div>
               </div>
