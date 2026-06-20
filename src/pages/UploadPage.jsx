@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Upload, Link, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Link, RefreshCw, CheckCircle2, AlertCircle, ArrowRight, Plus } from "lucide-react";
 import { uploadImage, uploadImageFromUrl } from "../services/upload";
 
 const ALLOWED_EXT = [".jpg", ".jpeg", ".png", ".webp", ".heic"];
@@ -10,6 +10,7 @@ export default function UploadPage() {
   const [urlValue, setUrlValue] = useState("");
   const [status, setStatus] = useState("idle"); // idle | uploading | success | error
   const [errorMsg, setErrorMsg] = useState("");
+  const [uploadedCount, setUploadedCount] = useState(0);
   const fileRef = useRef();
 
   const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
@@ -40,9 +41,7 @@ export default function UploadPage() {
     try {
       await uploadImage(file);
       setStatus("success");
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("mary:navigate", { detail: "Analytics" }));
-      }, 800);
+      setUploadedCount((c) => c + 1);
     } catch (err) {
       setStatus("error");
       setErrorMsg(err.message || "Upload gagal. Coba lagi.");
@@ -60,31 +59,39 @@ export default function UploadPage() {
       await uploadImageFromUrl(urlValue.trim());
       setStatus("success");
       setUrlValue("");
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("mary:navigate", { detail: "Analytics" }));
-      }, 800);
+      setUploadedCount((c) => c + 1);
     } catch (err) {
       setStatus("error");
       setErrorMsg(err.message || "Gagal mengambil gambar dari URL.");
     }
   }
 
+  function handleUploadAnother() {
+    setStatus("idle");
+    setErrorMsg("");
+  }
+
+  function handleGoToAnalytics() {
+    window.dispatchEvent(new CustomEvent("mary:navigate", { detail: "Analytics" }));
+  }
+
   const isBusy = status === "uploading";
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      <div className="bg-[#F6F6F6] p-[10px] rounded-[21px] w-[520px]">
+    <div className="absolute inset-0 flex items-center justify-center px-4">
+      <div className="bg-[#F6F6F6] p-[10px] rounded-[21px] w-full max-w-[520px]">
         <div className="flex flex-col gap-3">
 
           {/* Drop zone */}
           <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => !isBusy && fileRef.current.click()}
-            className={`rounded-2xl border-2 border-dashed cursor-pointer transition-all flex flex-col items-center justify-center gap-4 py-14 px-8
+            onDragOver={status !== "success" ? handleDragOver : undefined}
+            onDragLeave={status !== "success" ? handleDragLeave : undefined}
+            onDrop={status !== "success" ? handleDrop : undefined}
+            onClick={() => status === "idle" && !isBusy && fileRef.current.click()}
+            className={`rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-4 py-14 px-8
+              ${status === "idle" ? "cursor-pointer" : "cursor-default"}
               ${isDragging ? "border-[#085041] bg-[#B6E0CD]/60" : "border-[#B6E0CD] bg-[#B6E0CD]/40"}
-              ${isBusy ? "opacity-60 cursor-not-allowed" : ""}`}
+              ${isBusy ? "opacity-60" : ""}`}
           >
             <input
               ref={fileRef}
@@ -105,7 +112,30 @@ export default function UploadPage() {
             {status === "success" && (
               <>
                 <CheckCircle2 size={40} className="text-[#085041]" />
-                <p className="text-[13px] text-[#085041] font-medium">Upload berhasil! Mengarahkan ke Analytics...</p>
+                <div className="text-center">
+                  <p className="text-[13px] text-[#085041] font-medium">
+                    Upload berhasil{uploadedCount > 1 ? ` (${uploadedCount} file)` : ""}!
+                  </p>
+                  <p className="text-[12px] text-[#5F5E5A] mt-1">
+                    File aman tersimpan & siap dianalisis.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleUploadAnother}
+                    className="flex items-center gap-1.5 bg-white border border-[#5DCAA5] text-[#085041] text-[13px] font-medium px-4 py-2 rounded-lg hover:bg-[#E1F5EE] transition-colors"
+                  >
+                    <Plus size={14} />
+                    Upload lagi
+                  </button>
+                  <button
+                    onClick={handleGoToAnalytics}
+                    className="flex items-center gap-1.5 bg-[#5DCAA5] text-[#085041] text-[13px] font-medium px-4 py-2 rounded-lg hover:bg-[#B6E0CD] transition-colors"
+                  >
+                    Lihat hasil
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
               </>
             )}
 
@@ -133,18 +163,20 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* URL input */}
-          <form onSubmit={handleUrlSubmit} className="flex items-center gap-2 bg-white border border-[#D3D1C7] rounded-full px-4 py-2.5">
-            <Link size={15} className="text-[#888780] flex-shrink-0" />
-            <input
-              type="text"
-              value={urlValue}
-              onChange={(e) => setUrlValue(e.target.value)}
-              placeholder="Enter Image URL"
-              disabled={isBusy}
-              className="flex-1 text-[13px] text-[#2C2C2A] bg-transparent outline-none placeholder:text-[#B0AEA7] disabled:opacity-60"
-            />
-          </form>
+          {/* URL input — disembunyikan saat sukses biar tidak bingung */}
+          {status !== "success" && (
+            <form onSubmit={handleUrlSubmit} className="flex items-center gap-2 bg-white border border-[#D3D1C7] rounded-full px-4 py-2.5">
+              <Link size={15} className="text-[#888780] flex-shrink-0" />
+              <input
+                type="text"
+                value={urlValue}
+                onChange={(e) => setUrlValue(e.target.value)}
+                placeholder="Enter Image URL"
+                disabled={isBusy}
+                className="flex-1 text-[13px] text-[#2C2C2A] bg-transparent outline-none placeholder:text-[#B0AEA7] disabled:opacity-60"
+              />
+            </form>
+          )}
 
         </div>
       </div>
