@@ -10,7 +10,7 @@ export const VERDICT_LABELS = {
   inconclusive: "Tidak Dapat Ditentukan",
   likely_authentic: "Kemungkinan Asli",
   authentic: "Asli",
-  degraded_signal: "Sinyal Tidak Memadai",
+  degraded_signal: "Kualitas Gambar Kurang Jelas",
 };
 
 /** Ubah score 0.0–1.0 jadi persen integer. null -> 0 */
@@ -65,7 +65,7 @@ export function buildAnalysisCardData(upload, analysis) {
 
   return {
     id: upload.upload_id,
-    filename: upload.original_filename,
+    filename: upload.original_filename || "Tanpa nama file",
     aiScore: toPercent(analysis?.total_confidence_score),
     verdict: analysis?.verdict,
     verdictLabel: VERDICT_LABELS[analysis?.verdict] || "Belum dianalisis",
