@@ -20,6 +20,7 @@ function MainLayout() {
   useEffect(() => {
     function handleNavigate(e) {
       setActive(e.detail);
+      setExpanded(false); // auto-collapse sidebar setelah navigasi (penting untuk mobile)
     }
     window.addEventListener("mary:navigate", handleNavigate);
     return () => window.removeEventListener("mary:navigate", handleNavigate);
@@ -38,9 +39,9 @@ function MainLayout() {
   };
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif" }} className="flex h-screen w-full bg-[#EDEAE2]">
+    <div style={{ fontFamily: "'Inter', sans-serif" }} className="flex h-screen w-full bg-[#EDEAE2] overflow-hidden">
       <Sidebar active={active} setActive={setActive} expanded={expanded} setExpanded={setExpanded} />
-      <main className="relative flex-1 bg-[#EDEAE2] overflow-hidden">
+      <main className="relative flex-1 bg-[#EDEAE2] overflow-hidden min-w-0">
         {renderPage()}
       </main>
     </div>
