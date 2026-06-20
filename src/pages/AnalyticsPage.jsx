@@ -5,6 +5,7 @@ import { analyzeUpload } from "../services/analyze";
 import { generateReport } from "../services/report";
 import { buildAnalysisCardData } from "../services/formatters";
 import ReportSubmissionPage from "./ReportSubmissionPage";
+import ImagePreviewModal from "../components/ImagePreviewModal";
 
 function getScoreColor(score) {
   if (score >= 70) return "#D32F2F";
@@ -18,7 +19,7 @@ function getBarColor(score) {
   return "#66BB6A";
 }
 
-function AnalysisCard({ data, onAnalyze, onGenerateReport, onPrepareSubmission }) {
+function AnalysisCard({ data, onAnalyze, onGenerateReport, onPrepareSubmission, onPreview }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -63,8 +64,11 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport, onPrepareSubmission }
     <div className="bg-[#F6F6F6] rounded-2xl p-4 border border-[#E8E6DF] mb-3">
       {/* Top row */}
       <div className="flex gap-3">
-        {/* Thumbnail */}
-        <div className="w-[80px] h-[80px] rounded-xl bg-[#E8E6DF] flex-shrink-0 overflow-hidden">
+        {/* Thumbnail — klik untuk preview ukuran penuh */}
+        <div
+          className="w-[80px] h-[80px] rounded-xl bg-[#E8E6DF] flex-shrink-0 overflow-hidden cursor-pointer"
+          onClick={() => data.thumbnail && onPreview(data.thumbnail, data.filename)}
+        >
           {data.thumbnail
             ? <img src={data.thumbnail} alt={data.filename} className="w-full h-full object-cover" />
             : <div className="w-full h-full bg-[#D3D1C7] flex items-center justify-center text-[#888780] text-xs">No img</div>
@@ -84,7 +88,7 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport, onPrepareSubmission }
               {hasAnalysis && data.isDegraded && (
                 <div className="flex items-center gap-1.5 mt-1">
                   <AlertTriangle size={16} className="text-[#E65100]" />
-                  <p className="text-[14px] font-semibold text-[#E65100]">Sinyal Tidak Memadai</p>
+                  <p className="text-[14px] font-semibold text-[#E65100]">Kualitas Gambar Kurang Jelas</p>
                 </div>
               )}
 
@@ -166,10 +170,13 @@ function AnalysisCard({ data, onAnalyze, onGenerateReport, onPrepareSubmission }
         <p className="text-[11px] text-[#888780] font-mono truncate">{data.hash}</p>
       </div>
 
-      {/* Penjelasan saat degraded */}
-      {hasAnalysis && data.isDegraded && data.explanation && (
+      {/* Penjelasan saat kualitas gambar kurang jelas */}
+      {hasAnalysis && data.isDegraded && (
         <div className="mt-2.5 bg-[#FAEEDA] border border-[#F5D89E] rounded-lg px-3 py-2">
-          <p className="text-[12px] text-[#854F0B] leading-relaxed">{data.explanation}</p>
+          <p className="text-[12px] text-[#854F0B] leading-relaxed">
+            {data.explanation ||
+              "Foto ini terlalu buram atau terkompresi sehingga sistem belum bisa memberi kesimpulan pasti. Coba upload ulang dengan kualitas asli, atau jalankan analisis ulang."}
+          </p>
         </div>
       )}
 
@@ -215,6 +222,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submissionView, setSubmissionView] = useState(null); // { report, cardData } | null
+  const [previewImage, setPreviewImage] = useState(null); // { src, alt } | null
 
   const loadUploads = async () => {
     setLoading(true);
@@ -238,6 +246,12 @@ export default function AnalyticsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadUploads();
   }, []);
+
+  // Beritahu sidebar bahwa kita sedang di sub-halaman "Siapkan Laporan"
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mary:lock-nav", { detail: !!submissionView }));
+    return () => window.dispatchEvent(new CustomEvent("mary:lock-nav", { detail: false }));
+  }, [submissionView]);
 
   async function handleAnalyze(uploadId) {
     try {
@@ -271,6 +285,13 @@ export default function AnalyticsPage() {
     <div className="absolute inset-0 overflow-y-auto px-4 py-5">
       <div className="max-w-[500px] mx-auto">
 
+        <div className="mb-4">
+          <h2 className="text-[14px] font-semibold text-[#2C2C2A]">Hasil Analisis</h2>
+          <p className="text-[12px] text-[#888780] mt-0.5">
+            Foto yang sudah kamu upload, beserta hasil deteksi AI dan opsi untuk membuat laporan.
+          </p>
+        </div>
+
         {loading && (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 border-2 border-[#B6E0CD] border-t-[#085041] rounded-full animate-spin" />
@@ -296,9 +317,16 @@ export default function AnalyticsPage() {
             onAnalyze={handleAnalyze}
             onGenerateReport={handleGenerateReport}
             onPrepareSubmission={(report, cardData) => setSubmissionView({ report, cardData })}
+            onPreview={(src, alt) => setPreviewImage({ src, alt })}
           />
         ))}
       </div>
+
+      <ImagePreviewModal
+        src={previewImage?.src}
+        alt={previewImage?.alt}
+        onClose={() => setPreviewImage(null)}
+      />
     </div>
   );
 }

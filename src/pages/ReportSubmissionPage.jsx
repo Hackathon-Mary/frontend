@@ -48,13 +48,18 @@ export default function ReportSubmissionPage({ report, cardData, onBack }) {
     <div className="absolute inset-0 overflow-y-auto px-4 py-5">
       <div className="max-w-[600px] mx-auto flex flex-col gap-4">
 
+        {/* Breadcrumb */}
         {onBack && (
-          <button
-            onClick={onBack}
-            className="self-start text-[13px] text-[#5F5E5A] hover:text-[#085041] transition-colors"
-          >
-            ← Kembali
-          </button>
+          <div className="flex items-center gap-2 text-[12px]">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1.5 text-[13px] text-[#5F5E5A] hover:text-[#085041] transition-colors"
+            >
+              ← Kembali
+            </button>
+            <span className="text-[#D3D1C7]">/</span>
+            <span className="text-[#085041] font-medium">Siapkan Laporan</span>
+          </div>
         )}
 
         {/* Header */}
